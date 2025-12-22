@@ -17,12 +17,14 @@ type Env interface {
 	ActiveProfile() string
 	PostgresConfig() PostgresConfig
 	APIConfig() APIConfig
+	SecurityConfig() SecurityConfig
 }
 
 type env struct {
 	activeProfile  string
 	postgresConfig PostgresConfig
 	apiConfig      APIConfig
+	securityConfig SecurityConfig
 }
 
 func (e *env) IsProd() bool {
@@ -41,6 +43,10 @@ func (e *env) APIConfig() APIConfig {
 	return e.apiConfig
 }
 
+func (e *env) SecurityConfig() SecurityConfig {
+	return e.securityConfig
+}
+
 func Load() (Env, error) {
 	e := &env{
 		activeProfile: getEnv("ACTIVE_PROFILE", "test"),
@@ -54,6 +60,10 @@ func Load() (Env, error) {
 
 	if e.apiConfig, err = loadAPIConfig(e.IsProd()); err != nil {
 		return nil, fmt.Errorf("failed to load api config: %v", err)
+	}
+
+	if e.securityConfig, err = loadSecurityConfig(e.IsProd()); err != nil {
+		return nil, fmt.Errorf("failed to load security config: %v", err)
 	}
 
 	return e, nil
