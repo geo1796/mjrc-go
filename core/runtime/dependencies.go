@@ -1,33 +1,28 @@
 package runtime
 
 import (
-	"mjrc/core/env"
 	"mjrc/core/postgres"
 	"mjrc/core/security"
 )
 
 type Dependencies interface {
-	APIConfig() env.APIConfig
 	DB() postgres.DB
 	JWT() security.JWT
+	AdminPassword() security.AdminPassword
 }
 
-func New(apiConfig env.APIConfig, db postgres.DB, jwt security.JWT) Dependencies {
+func New(db postgres.DB, jwt security.JWT, adminPassword security.AdminPassword) Dependencies {
 	return &dependencies{
-		apiConfig: apiConfig,
-		db:        db,
-		jwt:       jwt,
+		db:            db,
+		jwt:           jwt,
+		adminPassword: adminPassword,
 	}
 }
 
 type dependencies struct {
-	apiConfig env.APIConfig
-	db        postgres.DB
-	jwt       security.JWT
-}
-
-func (d *dependencies) APIConfig() env.APIConfig {
-	return d.apiConfig
+	db            postgres.DB
+	jwt           security.JWT
+	adminPassword security.AdminPassword
 }
 
 func (d *dependencies) DB() postgres.DB {
@@ -36,4 +31,8 @@ func (d *dependencies) DB() postgres.DB {
 
 func (d *dependencies) JWT() security.JWT {
 	return d.jwt
+}
+
+func (d *dependencies) AdminPassword() security.AdminPassword {
+	return d.adminPassword
 }

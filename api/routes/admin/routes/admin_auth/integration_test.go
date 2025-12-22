@@ -17,7 +17,7 @@ type loginReq struct {
 }
 
 func TestIntegration_AuthenticateUser(t *testing.T) {
-	const adminPassword = "Test123!"
+	adminPassword := "Test123!"
 
 	jwt := security.NewJWT(
 		"jwt",
@@ -26,7 +26,7 @@ func TestIntegration_AuthenticateUser(t *testing.T) {
 	)
 
 	r := chi.NewRouter()
-	Route(jwt, adminPassword).Register(r)
+	Route(jwt, security.NewAdminPassword("Test123!")).Register(r)
 
 	t.Run("bad json -> 400 and no cookie", func(t *testing.T) {
 		rec := httptest.NewRecorder()

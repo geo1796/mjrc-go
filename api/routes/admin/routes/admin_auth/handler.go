@@ -12,8 +12,8 @@ type Handler interface {
 }
 
 type handler struct {
-	adminPassword string
 	jwt           security.JWT
+	adminPassword security.AdminPassword
 }
 
 func (h *handler) authenticateUser(w http.ResponseWriter, r *http.Request) {
@@ -27,7 +27,7 @@ func (h *handler) authenticateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if i.Password != h.adminPassword {
+	if !h.adminPassword.Compare(i.Password) {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}

@@ -11,10 +11,10 @@ const (
 	Method = http.MethodPost
 )
 
-func Route(jwt security.JWT, password string) *chix.Route {
+func Route(jwt security.JWT, adminPassword security.AdminPassword) *chix.Route {
 	hdlr := &handler{
 		jwt:           jwt,
-		adminPassword: password,
+		adminPassword: adminPassword,
 	}
 	return chix.NewRoute(Path, Method, hdlr.authenticateUser)
 }

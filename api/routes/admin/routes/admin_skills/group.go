@@ -1,18 +1,22 @@
 package admin_skills
 
 import (
+	"mjrc/api/routes/admin/routes/admin_skills/create_skill"
+	"mjrc/api/routes/admin/routes/admin_skills/delete_skill"
+	"mjrc/api/routes/admin/routes/admin_skills/update_skill"
 	"mjrc/core/chix"
-
-	"github.com/go-chi/chi/v5"
+	"mjrc/core/runtime"
 )
 
 const Prefix = "/skills"
 
-func group(router chi.Router) *chix.Group {
+func Group(deps runtime.Dependencies) *chix.Group {
 	group := chix.NewGroup(Prefix)
 
 	group.Add(
-	//TODO: add routes
+		create_skill.Route(deps.DB()),
+		update_skill.Route(deps.DB()),
+		delete_skill.Route(deps.DB()),
 	)
 
 	return group

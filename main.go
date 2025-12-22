@@ -38,13 +38,15 @@ func main() {
 	}
 	defer db.Close()
 
-	jwt := security.NewJWT(
-		environ.SecurityConfig().JwtCookieName,
-		environ.SecurityConfig().JwtSecret,
-		environ.SecurityConfig().JwtTTL,
+	deps := runtime.New(
+		db,
+		security.NewJWT(
+			environ.SecurityConfig().JwtCookieName,
+			environ.SecurityConfig().JwtSecret,
+			environ.SecurityConfig().JwtTTL,
+		),
+		security.NewAdminPassword(environ.SecurityConfig().AdminPassword),
 	)
-
-	deps := runtime.New(environ.APIConfig(), db, jwt)
 
 	router := chi.NewRouter()
 	router.Use(middleware.Recoverer)
@@ -73,10 +75,10 @@ func main() {
 		_, _ = w.Write([]byte("db: ok\n"))
 	})
 
-	api.Register(router, deps)
+	api.Register(router, deps, environ.APIConfig().ApiKey)
 
 	srv := &http.Server{
-		Addr:    deps.APIConfig().Address,
+		Addr:    environ.APIConfig().Address,
 		Handler: router,
 	}
 

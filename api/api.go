@@ -1,6 +1,9 @@
 package api
 
 import (
+	"mjrc/api/middlewares/api_key"
+	"mjrc/api/routes/admin"
+	"mjrc/api/routes/public"
 	"mjrc/core/chix"
 	"mjrc/core/runtime"
 
@@ -9,16 +12,19 @@ import (
 
 const Prefix = "/api"
 
-func group(router chi.Router, deps runtime.Dependencies) *chix.Group {
+func group(deps runtime.Dependencies, apiKey string) *chix.Group {
 	group := chix.NewGroup(Prefix)
 
 	group.Add(
-	//TODO: add routes
+		api_key.Middleware(apiKey),
+
+		public.Group(deps),
+		admin.Group(deps),
 	)
 
 	return group
 }
 
-func Register(router chi.Router, deps runtime.Dependencies) {
-	group(router, deps).Register(router)
+func Register(router chi.Router, deps runtime.Dependencies, apiKey string) {
+	group(deps, apiKey).Register(router)
 }

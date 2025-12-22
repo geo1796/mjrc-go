@@ -10,6 +10,7 @@ type SecurityConfig struct {
 	JwtCookieName string
 	JwtSecret     []byte
 	JwtTTL        time.Duration
+	AdminPassword string
 }
 
 func loadSecurityConfig(isProd bool) (SecurityConfig, error) {
@@ -25,6 +26,12 @@ func loadSecurityConfig(isProd bool) (SecurityConfig, error) {
 		return SecurityConfig{}, fmt.Errorf("failed to parse JWT_TTL: %v", err)
 	} else {
 		cfg.JwtTTL = jwtTTL
+	}
+
+	if adminPassword := getEnv("ADMIN_PASSWORD", ""); adminPassword == "" && isProd {
+		return SecurityConfig{}, fmt.Errorf("ADMIN_PASSWORD is not set")
+	} else {
+		cfg.AdminPassword = adminPassword
 	}
 
 	return cfg, nil
