@@ -1,8 +1,0 @@
-<component name="ProjectCodeStyleConfiguration">
-  <code_scheme name="Project" version="173">
-    <option name="AUTODETECT_INDENTS" value="false" />
-    <PostgresCodeStyleSettings version="7">
-      <option name="USE_GENERAL_STYLE" value="false" />
-    </PostgresCodeStyleSettings>
-  </code_scheme>
-</component>
