@@ -31,19 +31,19 @@ func buildTestData() (data testData) {
 	return
 }
 
-func loadTestData(ctx context.Context, t *testing.T) (container testcontainers.Container, pgxProvider postgres.DB, data testData) {
-	container, pgxProvider = postgres.NewTestContainer(ctx, t)
+func loadTestData(ctx context.Context, t *testing.T) (container testcontainers.Container, db postgres.DB, data testData) {
+	container, db = postgres.NewTestContainer(ctx, t)
 	data = buildTestData()
 
 	var err error
 	defer func() {
 		if err != nil {
-			postgres.CleanUpTestContainer(ctx, t, container, pgxProvider)
+			postgres.CleanUpTestContainer(ctx, t, container, db)
 			t.Fatal(err)
 		}
 	}()
 
-	q := pgxProvider.Queries()
+	q := db.Queries()
 	for i, s := range data.skills {
 		cats := make([]string, 0, len(s.Categories))
 		for _, c := range s.Categories {
