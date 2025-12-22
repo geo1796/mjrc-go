@@ -2,14 +2,16 @@ package update_skill
 
 import (
 	"mjrc/core/chix"
+	"mjrc/core/postgres"
 	"net/http"
 )
 
 const (
-	Path   = "/"
+	Path   = "/{id}"
 	Method = http.MethodPut
 )
 
-func Route() *chix.Route {
-	panic("not implemented")
+func Route(db postgres.DB) *chix.Route {
+	hdlr := &handler{db}
+	return chix.NewRoute(Path, Method, hdlr.updateSkillForAdmin)
 }

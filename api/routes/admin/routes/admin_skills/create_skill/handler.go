@@ -6,9 +6,9 @@ import (
 	"mjrc/core/postgres"
 	"net/http"
 
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 	"mjrc/core/postgres/dao"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Handler interface {
@@ -16,14 +16,10 @@ type Handler interface {
 }
 
 type handler struct {
-    db postgres.DB
+	db postgres.DB
 }
 
 func (h *handler) createSkillForAdmin(w http.ResponseWriter, r *http.Request) {
-	//	junie
-	// use models.Skill as input
-	// insert using sqlc generated queries in pkg dao
-
 	// Decode JSON body
 	var in models.Skill
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
@@ -34,11 +30,15 @@ func (h *handler) createSkillForAdmin(w http.ResponseWriter, r *http.Request) {
 	// Normalize slices (NOT NULL array columns should not receive NULL)
 	categories := make([]string, 0, len(in.Categories))
 	for _, c := range in.Categories {
+		if !c.IsValid() {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 		categories = append(categories, string(c))
 	}
 	prereqs := make([]pgtype.UUID, 0, len(in.Prerequisites))
 	for _, p := range in.Prerequisites {
-		prereqs = append(prereqs, pgtype.UUID{Bytes: uuid.UUID(p), Valid: true})
+		prereqs = append(prereqs, pgtype.UUID{Bytes: p, Valid: true})
 	}
 
 	params := dao.CreateSkillParams{

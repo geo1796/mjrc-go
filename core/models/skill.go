@@ -18,6 +18,22 @@ const (
 	SkillCategoryMultiples SkillCategory = "multiples"
 )
 
+func (sc SkillCategory) IsValid() bool {
+	switch sc {
+	case
+		SkillCategoryBasics,
+		SkillCategoryFootwork,
+		SkillCategoryBackward,
+		SkillCategoryWraps,
+		SkillCategoryReleases,
+		SkillCategoryFloaters,
+		SkillCategoryMultiples:
+		return true
+	default:
+		return false
+	}
+}
+
 type Skill struct {
 	ID uuid.UUID `json:"id"`
 
