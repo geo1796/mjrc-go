@@ -1,23 +1,78 @@
 package create_skill
 
 import (
-	"context"
-	"mjrc/core/postgres"
-	"testing"
+    "context"
+    "bytes"
+    "encoding/json"
+    "mjrc/core/postgres"
+    "testing"
 
-	"github.com/go-chi/chi/v5"
+    "github.com/go-chi/chi/v5"
+    "net/http"
+    "net/http/httptest"
+    "sort"
+    "mjrc/core/models"
 )
 
 func TestIntegration_CreateSkill(t *testing.T) {
-	ctx := context.Background()
-	container, db := postgres.NewTestContainer(ctx, t)
-	defer postgres.CleanUpTestContainer(ctx, t, container, db)
+    ctx := context.Background()
+    container, db := postgres.NewTestContainer(ctx, t)
+    defer postgres.CleanUpTestContainer(ctx, t, container, db)
 
-	r := chi.NewRouter()
-	Route(db).Register(r)
+    r := chi.NewRouter()
+    Route(db).Register(r)
 
-	panic("complete implementation")
+    // happy path: valid payload -> 201 and row inserted
+    in := models.Skill{
+        Name:             "double under",
+        Level:            5,
+        YoutubeVideoID:   "yt_double_under",
+        IsVideoLandscape: true,
+        Categories:       []models.SkillCategory{models.SkillCategoryMultiples, models.SkillCategoryBasics},
+    }
 
-	//junie
-	// complete implementation
+    body, _ := json.Marshal(in)
+    req := httptest.NewRequest(http.MethodPost, Path, bytes.NewReader(body))
+    req.Header.Set("Content-Type", "application/json")
+    rec := httptest.NewRecorder()
+    r.ServeHTTP(rec, req)
+
+    if rec.Code != http.StatusCreated {
+        t.Fatalf("expected status 201, got %d", rec.Code)
+    }
+
+    // verify it's persisted
+    rows, err := db.Queries().GetSkills(ctx)
+    if err != nil {
+        t.Fatalf("GetSkills failed: %v", err)
+    }
+    if len(rows) != 1 {
+        t.Fatalf("expected 1 skill in db, got %d", len(rows))
+    }
+    got := rows[0]
+    if got.Name != in.Name {
+        t.Fatalf("expected name %s, got %s", in.Name, got.Name)
+    }
+    if got.YoutubeVideoID != in.YoutubeVideoID {
+        t.Fatalf("expected youtubeVideoId %s, got %s", in.YoutubeVideoID, got.YoutubeVideoID)
+    }
+    if got.IsVideoLandscape != in.IsVideoLandscape {
+        t.Fatalf("expected isVideoLandscape %v, got %v", in.IsVideoLandscape, got.IsVideoLandscape)
+    }
+    if got.Level != in.Level {
+        t.Fatalf("expected level %d, got %d", in.Level, got.Level)
+    }
+    // compare categories ignoring order
+    expCats := []string{string(in.Categories[0]), string(in.Categories[1])}
+    sort.Strings(expCats)
+    cats := append([]string(nil), got.Categories...)
+    sort.Strings(cats)
+    if len(cats) != len(expCats) {
+        t.Fatalf("expected %d categories, got %d", len(expCats), len(cats))
+    }
+    for i := range cats {
+        if cats[i] != expCats[i] {
+            t.Fatalf("expected categories %v, got %v", expCats, got.Categories)
+        }
+    }
 }
