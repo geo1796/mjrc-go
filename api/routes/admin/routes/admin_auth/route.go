@@ -2,9 +2,8 @@ package admin_auth
 
 import (
 	"mjrc/core/chix"
+	"mjrc/core/security"
 	"net/http"
-
-	"github.com/go-chi/chi/v5"
 )
 
 const (
@@ -12,6 +11,10 @@ const (
 	Method = http.MethodPost
 )
 
-func Route(router chi.Router, password string) *chix.Route {
-	panic("not implemented")
+func Route(jwt security.JWT, password string) *chix.Route {
+	hdlr := &handler{
+		jwt:           jwt,
+		adminPassword: password,
+	}
+	return chix.NewRoute(Path, Method, hdlr.authenticateUser)
 }

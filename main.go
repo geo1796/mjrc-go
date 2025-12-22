@@ -8,6 +8,7 @@ import (
 	"mjrc/core/logger"
 	"mjrc/core/postgres"
 	"mjrc/core/runtime"
+	"mjrc/core/security"
 	"net/http"
 	"os"
 	"os/signal"
@@ -37,7 +38,13 @@ func main() {
 	}
 	defer db.Close()
 
-	deps := runtime.New(environ.APIConfig(), db)
+	jwt := security.NewJWT(
+		environ.SecurityConfig().JwtCookieName,
+		environ.SecurityConfig().JwtSecret,
+		environ.SecurityConfig().JwtTTL,
+	)
+
+	deps := runtime.New(environ.APIConfig(), db, jwt)
 
 	router := chi.NewRouter()
 	router.Use(middleware.Recoverer)

@@ -1,14 +1,22 @@
 package admin
 
 import (
+	"mjrc/api/routes/admin/middlewares/is_authed"
+	"mjrc/api/routes/admin/routes/admin_auth"
 	"mjrc/core/chix"
 	"mjrc/core/runtime"
-
-	"github.com/go-chi/chi/v5"
 )
 
 const Prefix = "/admin"
 
-func Group(router chi.Router, deps runtime.Dependencies) *chix.Group {
-	panic("not implemented")
+func Group(deps runtime.Dependencies) *chix.Group {
+	g := chix.NewGroup(Prefix)
+
+	g.Add(
+		admin_auth.Route(deps.JWT(), deps.APIConfig().AdminPassword),
+
+		is_authed.Middleware(deps.JWT()),
+	)
+
+	return g
 }

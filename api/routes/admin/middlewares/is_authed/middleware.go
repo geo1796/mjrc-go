@@ -2,12 +2,15 @@ package is_authed
 
 import (
 	"mjrc/core/chix"
-
-	"github.com/go-chi/chi/v5"
+	"mjrc/core/security"
 )
 
 const Name = "is_authed"
 
-func Middleware(router chi.Router, jwtSecret string) *chix.Middleware {
-	panic("not implemented")
+func Middleware(jwt security.JWT) *chix.Middleware {
+	hdlr := &handler{jwt}
+	return chix.NewMiddleware(
+		Name,
+		hdlr.authenticateRequest,
+	)
 }
