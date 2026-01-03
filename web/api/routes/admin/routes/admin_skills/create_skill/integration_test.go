@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"mjrc/core/postgres"
+	"mjrc/core/runtime"
 	"testing"
 
 	"mjrc/core/models"
@@ -21,7 +22,7 @@ func TestIntegration_CreateSkill(t *testing.T) {
 	defer postgres.CleanUpTestContainer(ctx, t, container, db)
 
 	r := chi.NewRouter()
-	Route(db).Register(r)
+	Route(runtime.NewBuilder().WithDB(db).Build()).Register(r)
 
 	// happy path: valid payload -> 201 and row inserted
 	in := models.Skill{
@@ -84,7 +85,7 @@ func TestIntegration_CreateSkill_BadCategory(t *testing.T) {
 	defer postgres.CleanUpTestContainer(ctx, t, container, db)
 
 	r := chi.NewRouter()
-	Route(db).Register(r)
+	Route(runtime.NewBuilder().WithDB(db).Build()).Register(r)
 
 	in := models.Skill{
 		Name:             "invalid category skill",

@@ -2,6 +2,7 @@ package delete_skill
 
 import (
 	"context"
+	"mjrc/core/runtime"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -35,7 +36,7 @@ func TestIntegration_DeleteSkill(t *testing.T) {
 	idUUID, _ := uuid.FromBytes(rows[0].ID.Bytes[:])
 
 	r := chi.NewRouter()
-	Route(db).Register(r)
+	Route(runtime.NewBuilder().WithDB(db).Build()).Register(r)
 
 	req := httptest.NewRequest(http.MethodDelete, "/"+idUUID.String(), nil)
 	rec := httptest.NewRecorder()
@@ -61,7 +62,7 @@ func TestIntegration_DeleteSkill_InvalidID(t *testing.T) {
 	defer postgres.CleanUpTestContainer(ctx, t, container, db)
 
 	r := chi.NewRouter()
-	Route(db).Register(r)
+	Route(runtime.NewBuilder().WithDB(db).Build()).Register(r)
 
 	req := httptest.NewRequest(http.MethodDelete, "/not-a-uuid", nil)
 	rec := httptest.NewRecorder()

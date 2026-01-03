@@ -1,4 +1,4 @@
-package admin_auth
+package admin_login
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 )
 
 type Handler interface {
-	authenticateUser(w http.ResponseWriter, r *http.Request)
+	login(w http.ResponseWriter, r *http.Request)
 }
 
 type handler struct {
@@ -17,7 +17,7 @@ type handler struct {
 	adminAuthenticator security.Authenticator
 }
 
-func (h *handler) authenticateUser(w http.ResponseWriter, r *http.Request) {
+func (h *handler) login(w http.ResponseWriter, r *http.Request) {
 	type input struct {
 		Password string `json:"password"`
 	}

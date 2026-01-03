@@ -1,7 +1,7 @@
 package create_skill
 
 import (
-	"mjrc/core/postgres"
+	"mjrc/core/runtime"
 	"mjrc/web/chix"
 	"net/http"
 )
@@ -11,7 +11,7 @@ const (
 	Method = http.MethodPost
 )
 
-func Route(db postgres.DB) *chix.Route {
-	hdlr := &handler{db}
+func Route(deps runtime.Dependencies) *chix.Route {
+	hdlr := &handler{deps.DB()}
 	return chix.NewRoute(Path, Method, hdlr.createSkillForAdmin)
 }

@@ -14,9 +14,9 @@ func Group(deps runtime.Dependencies) *chix.Group {
 	group := chix.NewGroup(Prefix)
 
 	group.Add(
-		create_skill.Route(deps.DB()),
-		update_skill.Route(deps.DB()),
-		delete_skill.Route(deps.DB()),
+		create_skill.Route(deps),
+		update_skill.Route(deps),
+		delete_skill.Route(deps),
 	)
 
 	return group

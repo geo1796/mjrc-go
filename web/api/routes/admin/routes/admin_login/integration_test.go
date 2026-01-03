@@ -1,8 +1,9 @@
-package admin_auth
+package admin_login
 
 import (
 	"bytes"
 	"encoding/json"
+	"mjrc/core/runtime"
 	"mjrc/core/security"
 	"net/http"
 	"net/http/httptest"
@@ -26,7 +27,10 @@ func TestIntegration_AuthenticateUser(t *testing.T) {
 	)
 
 	r := chi.NewRouter()
-	Route(jwt, security.NewAuthenticator("Test123!")).Register(r)
+	Route(runtime.NewBuilder().
+		WithAdminAuthenticator(security.NewAuthenticator("Test123!")).
+		WithJWT(jwt).Build()).
+		Register(r)
 
 	t.Run("bad json -> 400 and no cookie", func(t *testing.T) {
 		rec := httptest.NewRecorder()

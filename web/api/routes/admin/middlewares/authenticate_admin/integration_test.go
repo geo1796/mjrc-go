@@ -1,6 +1,7 @@
 package authenticate_admin
 
 import (
+	"mjrc/core/runtime"
 	"mjrc/core/security"
 	"net/http"
 	"net/http/httptest"
@@ -21,7 +22,7 @@ func TestIntegration_AuthenticateAdmin(t *testing.T) {
 
 	// Router with middleware and a protected route
 	r := chi.NewRouter()
-	Middleware(jwt).Register(r)
+	Middleware(runtime.NewBuilder().WithJWT(jwt).Build()).Register(r)
 
 	called := false
 	r.Get(protectedPath, func(w http.ResponseWriter, r *http.Request) {

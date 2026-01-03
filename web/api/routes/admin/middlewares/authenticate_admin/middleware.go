@@ -1,6 +1,7 @@
 package authenticate_admin
 
 import (
+	"mjrc/core/runtime"
 	"mjrc/core/security"
 	"mjrc/web/chix"
 	"net/http"
@@ -8,8 +9,8 @@ import (
 
 const Name = "authenticate_admin"
 
-func Middleware(jwt security.JWT) *chix.Middleware {
-	hdlr := &handler{jwt}
+func Middleware(deps runtime.Dependencies) *chix.Middleware {
+	hdlr := &handler{deps.JWT()}
 	return chix.NewMiddleware(
 		Name,
 		hdlr.authenticateAdmin,

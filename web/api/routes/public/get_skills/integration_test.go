@@ -3,6 +3,7 @@ package get_skills
 import (
 	"context"
 	"encoding/json"
+	"mjrc/core/runtime"
 	"net/http"
 	"net/http/httptest"
 	"sort"
@@ -72,7 +73,7 @@ func TestIntegration_ETAG(t *testing.T) {
 	defer postgres.CleanUpTestContainer(ctx, t, container, db)
 
 	r := chi.NewRouter()
-	Route(db).Register(r)
+	Route(runtime.NewBuilder().WithDB(db).Build()).Register(r)
 
 	// First request to get the ETag
 	req1 := httptest.NewRequest(http.MethodGet, Path, nil)
@@ -110,7 +111,7 @@ func TestIntegration_GetSkills(t *testing.T) {
 	defer postgres.CleanUpTestContainer(ctx, t, container, db)
 
 	r := chi.NewRouter()
-	Route(db).Register(r)
+	Route(runtime.NewBuilder().WithDB(db).Build()).Register(r)
 
 	req := httptest.NewRequest(http.MethodGet, Path, nil)
 	rec := httptest.NewRecorder()
