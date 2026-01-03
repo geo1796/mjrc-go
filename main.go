@@ -1,14 +1,14 @@
-package mjrc_backend
+package main
 
 import (
 	"context"
 	"errors"
-	"mjrc/api"
 	"mjrc/core/env"
 	"mjrc/core/logger"
 	"mjrc/core/postgres"
 	"mjrc/core/runtime"
 	"mjrc/core/security"
+	"mjrc/web/api"
 	"net/http"
 	"os"
 	"os/signal"
@@ -20,13 +20,21 @@ import (
 )
 
 func main() {
+	os.Exit(run())
+}
+
+func run() int {
 	rootCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
 	environ, err := env.Load()
 	if err != nil {
 		logger.Error("failed to load env", logger.Err(err))
-		os.Exit(1)
+		return 1
+	}
+
+	if environ.IsProd() {
+		logger.SetGlobalLogger(logger.New(logger.LevelInfo))
 	}
 
 	db, err := postgres.New(rootCtx, environ.PostgresConfig().DSN,
@@ -34,19 +42,19 @@ func main() {
 		environ.PostgresConfig().MaxOpenConns, environ.PostgresConfig().MaxIdleConns)
 	if err != nil {
 		logger.Error("failed to create database", logger.Err(err))
-		os.Exit(1)
+		return 1
 	}
 	defer db.Close()
 
-	deps := runtime.New(
-		db,
-		security.NewJWT(
+	deps := runtime.NewBuilder().
+		WithDB(db).
+		WithJWT(security.NewJWT(
 			environ.SecurityConfig().JwtCookieName,
 			environ.SecurityConfig().JwtSecret,
-			environ.SecurityConfig().JwtTTL,
-		),
-		security.NewAdminPassword(environ.SecurityConfig().AdminPassword),
-	)
+			environ.SecurityConfig().JwtTTL)).
+		WithAdminAuthenticator(security.NewAuthenticator(environ.SecurityConfig().AdminPassword)).
+		WithAPIKeyAuthenticator(security.NewAuthenticator(environ.SecurityConfig().APIKey)).
+		Build()
 
 	router := chi.NewRouter()
 	router.Use(middleware.Recoverer)
@@ -55,7 +63,6 @@ func main() {
 	router.Get("/livez", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("ok\n"))
 	})
 
 	router.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
@@ -67,18 +74,16 @@ func main() {
 		if err := db.Pool().Ping(ctx); err != nil {
 			logger.Warn("healthz: db ping failed", logger.Err(err))
 			w.WriteHeader(http.StatusServiceUnavailable)
-			_, _ = w.Write([]byte("db: down\n"))
 			return
 		}
 
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("db: ok\n"))
 	})
 
-	api.Register(router, deps, environ.APIConfig().ApiKey)
+	api.Register(router, deps)
 
 	srv := &http.Server{
-		Addr:    environ.APIConfig().Address,
+		Addr:    ":8080",
 		Handler: router,
 	}
 
@@ -94,5 +99,8 @@ func main() {
 	logger.Info("server started")
 	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logger.Error("server error", logger.Err(err))
+		return 1
 	}
+
+	return 0
 }

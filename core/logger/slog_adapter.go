@@ -22,10 +22,6 @@ func (a slogAdapter) Error(s string, fields ...Entry) {
 	a.inner.Error(s, fieldsToAttr(fields)...)
 }
 
-func newSlogAdapter(inner *slog.Logger) *slogAdapter {
-	return &slogAdapter{inner: inner}
-}
-
 func fieldsToAttr(fields []Entry) []any {
 	attrs := make([]any, 0, len(fields)*2)
 

@@ -8,21 +8,15 @@ import (
 type Dependencies interface {
 	DB() postgres.DB
 	JWT() security.JWT
-	AdminPassword() security.AdminPassword
-}
-
-func New(db postgres.DB, jwt security.JWT, adminPassword security.AdminPassword) Dependencies {
-	return &dependencies{
-		db:            db,
-		jwt:           jwt,
-		adminPassword: adminPassword,
-	}
+	AdminAuthenticator() security.Authenticator
+	APIKeyAuthenticator() security.Authenticator
 }
 
 type dependencies struct {
-	db            postgres.DB
-	jwt           security.JWT
-	adminPassword security.AdminPassword
+	db                  postgres.DB
+	jwt                 security.JWT
+	adminAuthenticator  security.Authenticator
+	apiKeyAuthenticator security.Authenticator
 }
 
 func (d *dependencies) DB() postgres.DB {
@@ -33,6 +27,10 @@ func (d *dependencies) JWT() security.JWT {
 	return d.jwt
 }
 
-func (d *dependencies) AdminPassword() security.AdminPassword {
-	return d.adminPassword
+func (d *dependencies) AdminAuthenticator() security.Authenticator {
+	return d.adminAuthenticator
+}
+
+func (d *dependencies) APIKeyAuthenticator() security.Authenticator {
+	return d.apiKeyAuthenticator
 }

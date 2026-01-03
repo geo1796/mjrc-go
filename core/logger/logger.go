@@ -5,23 +5,22 @@ import (
 	"os"
 )
 
-var logger Logger
+const (
+	LevelDebug = slog.LevelDebug
+	LevelInfo  = slog.LevelInfo
+	LevelWarn  = slog.LevelWarn
+	LevelError = slog.LevelError
+)
 
-var _ = initLogger()
+var globalLogger = New(LevelDebug)
 
-func initLogger() bool {
-	var lvl slog.Level
+func SetGlobalLogger(logger Logger) {
+	globalLogger = logger
+}
 
-	if os.Getenv("ACTIVE_PROFILE") == "prod" {
-		lvl = slog.LevelInfo
-	} else {
-		lvl = slog.LevelDebug
-	}
-
-	logger = newSlogAdapter(slog.New(
-		slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: lvl})))
-
-	return true
+func New(level slog.Level) Logger {
+	return &slogAdapter{slog.New(
+		slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: level}))}
 }
 
 type Entry struct {
@@ -51,17 +50,17 @@ func Any(key string, value any) Entry {
 }
 
 func Debug(s string, fields ...Entry) {
-	logger.Debug(s, fields...)
+	globalLogger.Debug(s, fields...)
 }
 
 func Info(s string, fields ...Entry) {
-	logger.Info(s, fields...)
+	globalLogger.Info(s, fields...)
 }
 
 func Warn(s string, fields ...Entry) {
-	logger.Warn(s, fields...)
+	globalLogger.Warn(s, fields...)
 }
 
 func Error(s string, fields ...Entry) {
-	logger.Error(s, fields...)
+	globalLogger.Error(s, fields...)
 }
