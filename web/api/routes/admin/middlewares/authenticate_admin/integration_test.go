@@ -13,7 +13,6 @@ import (
 
 func TestIntegration_AuthenticateAdmin(t *testing.T) {
 	jwt := security.NewJWT(
-		"jwt",
 		[]byte("secret"),
 		1*time.Minute,
 	)

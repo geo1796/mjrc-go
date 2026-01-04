@@ -17,7 +17,6 @@ func TestIntegration_AuthenticateUser(t *testing.T) {
 	adminPassword := "Test123!"
 
 	jwt := security.NewJWT(
-		"jwt",
 		[]byte("secret"),
 		1*time.Minute,
 	)

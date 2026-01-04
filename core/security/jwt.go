@@ -9,27 +9,20 @@ import (
 )
 
 type JWT interface {
-	CookieName() string
 	Generate() (string, time.Time, error)
 	Parse(string) error
 }
 
-func NewJWT(cookieName string, secret []byte, ttl time.Duration) JWT {
+func NewJWT(secret []byte, ttl time.Duration) JWT {
 	return &jwt{
-		cookieName: cookieName,
-		secret:     secret,
-		ttl:        ttl,
+		secret: secret,
+		ttl:    ttl,
 	}
 }
 
 type jwt struct {
-	cookieName string
-	secret     []byte
-	ttl        time.Duration
-}
-
-func (j *jwt) CookieName() string {
-	return j.cookieName
+	secret []byte
+	ttl    time.Duration
 }
 
 const issuer = "mjrc-api"

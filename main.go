@@ -49,11 +49,15 @@ func run() int {
 	deps := runtime.NewBuilder().
 		WithDB(db).
 		WithJWT(security.NewJWT(
-			environ.SecurityConfig().AccessCookieName,
 			environ.SecurityConfig().AccessTokenSecret,
-			environ.SecurityConfig().AccessTokenTTL)).
-		WithAdminAuthenticator(security.NewAuthenticator(environ.SecurityConfig().AdminPassword)).
-		WithAPIKeyAuthenticator(security.NewAuthenticator(environ.SecurityConfig().APIKey)).
+			environ.SecurityConfig().AccessTokenTTL),
+		).
+		WithAdminAuthenticator(security.NewAuthenticator(
+			environ.SecurityConfig().AdminPassword),
+		).
+		WithAPIKeyAuthenticator(security.NewAuthenticator(
+			environ.SecurityConfig().APIKey),
+		).
 		Build()
 
 	router := chi.NewRouter()

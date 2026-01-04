@@ -7,7 +7,6 @@ import (
 )
 
 type SecurityConfig struct {
-	AccessCookieName  string
 	AccessTokenSecret []byte
 	AccessTokenTTL    time.Duration
 	AdminPassword     string
@@ -16,10 +15,6 @@ type SecurityConfig struct {
 
 func loadSecurityConfig(isProd bool) (SecurityConfig, error) {
 	var cfg SecurityConfig
-
-	if cfg.AccessCookieName = getEnv("ACCESS_COOKIE_NAME", ""); isProd && cfg.AccessCookieName == "" {
-		return SecurityConfig{}, errors.New("ACCESS_COOKIE_NAME is not set")
-	}
 
 	if accessTokenTTL, err := time.ParseDuration(getEnv("ACCESS_TOKEN_TTL", "1h")); err != nil {
 		return SecurityConfig{}, fmt.Errorf("failed to parse ACCESS_TOKEN_TTL: %w", err)
