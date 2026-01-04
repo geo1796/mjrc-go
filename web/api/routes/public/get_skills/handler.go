@@ -70,7 +70,7 @@ func (h *handler) getSkillsForUser(w http.ResponseWriter, r *http.Request) {
 			skill.Categories = append(skill.Categories, models.SkillCategory(c))
 		}
 		for _, p := range s.Prerequisites {
-			skill.Prerequisites = append(skill.Prerequisites, uuid.UUID(p.Bytes))
+			skill.Prerequisites = append(skill.Prerequisites, p.Bytes)
 		}
 
 		resp = append(resp, skill)

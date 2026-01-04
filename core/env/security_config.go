@@ -15,30 +15,30 @@ type SecurityConfig struct {
 }
 
 func loadSecurityConfig(isProd bool) (SecurityConfig, error) {
-	cfg := SecurityConfig{
-		AccessCookieName: getEnv("ACCESS_COOKIE_NAME", "__Host-jwt_"),
+	var cfg SecurityConfig
+
+	if cfg.AccessCookieName = getEnv("ACCESS_COOKIE_NAME", ""); isProd && cfg.AccessCookieName == "" {
+		return SecurityConfig{}, errors.New("ACCESS_COOKIE_NAME is not set")
 	}
 
-	if jwtTTL, err := time.ParseDuration(getEnv("ACCESS_TOKEN_TTL", "1h")); err != nil {
+	if accessTokenTTL, err := time.ParseDuration(getEnv("ACCESS_TOKEN_TTL", "1h")); err != nil {
 		return SecurityConfig{}, fmt.Errorf("failed to parse ACCESS_TOKEN_TTL: %w", err)
 	} else {
-		cfg.AccessTokenTTL = jwtTTL
+		cfg.AccessTokenTTL = accessTokenTTL
 	}
 
-	if isProd {
-		if jwtSecret := getEnv("ACCESS_TOKEN_SECRET", ""); jwtSecret == "" {
-			return SecurityConfig{}, errors.New("ACCESS_TOKEN_SECRET is not set")
-		} else {
-			cfg.AccessTokenSecret = []byte(jwtSecret)
-		}
+	if accessTokenSecret := getEnv("ACCESS_TOKEN_SECRET", ""); isProd && accessTokenSecret == "" {
+		return SecurityConfig{}, errors.New("ACCESS_TOKEN_SECRET is not set")
+	} else {
+		cfg.AccessTokenSecret = []byte(accessTokenSecret)
+	}
 
-		if cfg.AdminPassword = getEnv("ADMIN_PASSWORD", ""); cfg.AdminPassword == "" {
-			return SecurityConfig{}, errors.New("ADMIN_PASSWORD is not set")
-		}
+	if cfg.AdminPassword = getEnv("ADMIN_PASSWORD", ""); isProd && cfg.AdminPassword == "" {
+		return SecurityConfig{}, errors.New("ADMIN_PASSWORD is not set")
+	}
 
-		if cfg.APIKey = getEnv("API_KEY", ""); cfg.APIKey == "" {
-			return SecurityConfig{}, errors.New("API_KEY is not set")
-		}
+	if cfg.APIKey = getEnv("API_KEY", ""); isProd && cfg.APIKey == "" {
+		return SecurityConfig{}, errors.New("API_KEY is not set")
 	}
 
 	return cfg, nil
