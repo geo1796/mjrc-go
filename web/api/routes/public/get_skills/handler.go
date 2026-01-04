@@ -44,7 +44,7 @@ func (h *handler) getSkillsForUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("ETag", etag)
 
 	// Query all skills using the generated sqlc dao via our db wrapper
-	skillsRows, err := h.db.Queries().GetSkills(ctx)
+	rows, err := h.db.Queries().GetSkills(ctx)
 	if err != nil {
 		logger.Error("failed to query skills", logger.Err(err))
 		w.WriteHeader(http.StatusInternalServerError)
@@ -52,31 +52,34 @@ func (h *handler) getSkillsForUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Map dao rows to public API model
-	resp := make([]models.Skill, 0, len(skillsRows))
-	for _, s := range skillsRows {
+	dto := make([]models.Skill, 0, len(rows))
+	for _, s := range rows {
 		skill := models.Skill{
 			ID:               uuid.UUID(s.ID.Bytes),
 			Name:             s.Name,
 			Level:            s.Level,
 			YoutubeVideoID:   s.YoutubeVideoID,
 			IsVideoLandscape: s.IsVideoLandscape,
-			Prerequisites:    make([]uuid.UUID, 0, len(s.Prerequisites)),
-			Categories:       make([]models.SkillCategory, 0, len(s.Categories)),
-			CreatedAt:        s.CreatedAt.Time,
-			UpdatedAt:        s.UpdatedAt.Time,
+			Prerequisites:    make([]uuid.UUID, len(s.Prerequisites)),
+			Categories:       make([]models.SkillCategory, len(s.Categories)),
+			CreatedAt:        s.CreatedAt.Time.UTC(),
+			UpdatedAt:        s.UpdatedAt.Time.UTC(),
 		}
 
-		for _, c := range s.Categories {
-			skill.Categories = append(skill.Categories, models.SkillCategory(c))
+		for i, c := range s.Categories {
+			skill.Categories[i] = models.SkillCategory(c)
 		}
-		for _, p := range s.Prerequisites {
-			skill.Prerequisites = append(skill.Prerequisites, p.Bytes)
+		for i, p := range s.Prerequisites {
+			skill.Prerequisites[i] = p.Bytes
 		}
 
-		resp = append(resp, skill)
+		dto = append(dto, skill)
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(resp)
+
+	if err = json.NewEncoder(w).Encode(dto); err != nil {
+		logger.Error("failed to encode skills", logger.Err(err))
+	}
 }

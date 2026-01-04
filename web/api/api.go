@@ -13,14 +13,11 @@ import (
 const Prefix = "/api"
 
 func group(deps runtime.Dependencies) *chix.Group {
-	group := chix.NewGroup(Prefix, api_key.Middleware(deps))
-
-	group.Add(
+	return chix.NewGroup(Prefix,
+		api_key.Middleware(deps),
 		public.Group(deps),
 		admin.Group(deps),
 	)
-
-	return group
 }
 
 func Register(router chi.Router, deps runtime.Dependencies) {

@@ -5,6 +5,7 @@ import (
 	"mjrc/core/security"
 	"mjrc/web/chix"
 	"net/http"
+	"strings"
 )
 
 const Name = "authenticate_admin"
@@ -27,14 +28,12 @@ type handler struct {
 
 func (h *handler) authenticateAdmin(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie(h.jwt.CookieName())
-
-		if err != nil {
+		token, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
+		if !ok {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-
-		if err = h.jwt.Parse(cookie.Value); err != nil {
+		if err := h.jwt.Parse(token); err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}

@@ -5,7 +5,6 @@ import (
 	"mjrc/core/logger"
 	"mjrc/core/security"
 	"net/http"
-	"time"
 )
 
 type Handler interface {
@@ -18,10 +17,6 @@ type handler struct {
 }
 
 func (h *handler) login(w http.ResponseWriter, r *http.Request) {
-	type input struct {
-		Password string `json:"password"`
-	}
-
 	var i input
 	if err := json.NewDecoder(r.Body).Decode(&i); err != nil {
 		logger.Error("failed to decode JSON body", logger.Err(err))
@@ -35,21 +30,14 @@ func (h *handler) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jwt, expiry, err := h.jwt.Generate()
+	token, _, err := h.jwt.Generate()
 	if err != nil {
 		logger.Error("failed to generate JWT", logger.Err(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     h.jwt.CookieName(),
-		Value:    jwt,
-		Expires:  expiry,
-		MaxAge:   int(time.Until(expiry).Seconds()),
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
-	})
+	if err = json.NewEncoder(w).Encode(output{token}); err != nil {
+		logger.Error("failed to encode JWT", logger.Err(err))
+	}
 }

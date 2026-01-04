@@ -8,8 +8,8 @@ type authenticator struct {
 	secret string
 }
 
-func (p *authenticator) Authenticate(other string) bool {
-	return p.secret == other
+func (p *authenticator) Authenticate(secret string) bool {
+	return p.secret == secret
 }
 
 func NewAuthenticator(secret string) Authenticator {

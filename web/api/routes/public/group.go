@@ -9,11 +9,7 @@ import (
 const Prefix = "/public"
 
 func Group(deps runtime.Dependencies) *chix.Group {
-	group := chix.NewGroup(Prefix)
-
-	group.Add(
+	return chix.NewGroup(Prefix,
 		get_skills.Route(deps),
 	)
-
-	return group
 }

@@ -31,7 +31,7 @@ func TestIntegration_AuthenticateAdmin(t *testing.T) {
 		_, _ = w.Write([]byte("ok"))
 	})
 
-	t.Run("no cookie -> 401", func(t *testing.T) {
+	t.Run("no Authorization header -> 401", func(t *testing.T) {
 		called = false
 		req := httptest.NewRequest(http.MethodGet, protectedPath, nil)
 		rec := httptest.NewRecorder()
@@ -48,7 +48,7 @@ func TestIntegration_AuthenticateAdmin(t *testing.T) {
 	t.Run("invalid token -> 401", func(t *testing.T) {
 		called = false
 		req := httptest.NewRequest(http.MethodGet, protectedPath, nil)
-		req.AddCookie(&http.Cookie{Name: jwt.CookieName(), Value: "not-a-valid-token"})
+		req.Header.Set("Authorization", "Bearer not-a-valid-token")
 		rec := httptest.NewRecorder()
 		r.ServeHTTP(rec, req)
 
@@ -68,7 +68,7 @@ func TestIntegration_AuthenticateAdmin(t *testing.T) {
 		}
 
 		req := httptest.NewRequest(http.MethodGet, protectedPath, nil)
-		req.AddCookie(&http.Cookie{Name: jwt.CookieName(), Value: token})
+		req.Header.Set("Authorization", "Bearer "+token)
 		rec := httptest.NewRecorder()
 		r.ServeHTTP(rec, req)
 

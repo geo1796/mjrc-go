@@ -13,10 +13,6 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-type loginReq struct {
-	Password string `json:"password"`
-}
-
 func TestIntegration_AuthenticateUser(t *testing.T) {
 	adminPassword := "Test123!"
 
@@ -32,7 +28,7 @@ func TestIntegration_AuthenticateUser(t *testing.T) {
 		WithJWT(jwt).Build()).
 		Register(r)
 
-	t.Run("bad json -> 400 and no cookie", func(t *testing.T) {
+	t.Run("bad json -> 400 and no Authorization header", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodPost, Path, bytes.NewBufferString("{bad json}"))
 		req.Header.Set("Content-Type", "application/json")
@@ -41,15 +37,13 @@ func TestIntegration_AuthenticateUser(t *testing.T) {
 		if rec.Code != http.StatusBadRequest {
 			t.Fatalf("expected 400, got %d", rec.Code)
 		}
-		for _, c := range rec.Result().Cookies() {
-			if c.Name == jwt.CookieName() {
-				t.Fatalf("should not set jwt cookie on bad json")
-			}
+		if h := rec.Header().Get("Authorization"); h != "" {
+			t.Fatalf("should not set Authorization header on bad json")
 		}
 	})
 
-	t.Run("wrong password -> 401 and no cookie", func(t *testing.T) {
-		body, _ := json.Marshal(loginReq{Password: "wrong"})
+	t.Run("wrong password -> 401 and no Authorization header", func(t *testing.T) {
+		body, _ := json.Marshal(input{Password: "wrong"})
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodPost, Path, bytes.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
@@ -58,15 +52,13 @@ func TestIntegration_AuthenticateUser(t *testing.T) {
 		if rec.Code != http.StatusUnauthorized {
 			t.Fatalf("expected 401, got %d", rec.Code)
 		}
-		for _, c := range rec.Result().Cookies() {
-			if c.Name == jwt.CookieName() {
-				t.Fatalf("should not set jwt cookie on unauthorized")
-			}
+		if h := rec.Header().Get("Authorization"); h != "" {
+			t.Fatalf("should not set Authorization header on unauthorized")
 		}
 	})
 
-	t.Run("correct password -> 200, jwt cookie set and valid", func(t *testing.T) {
-		body, _ := json.Marshal(loginReq{Password: adminPassword})
+	t.Run("correct password -> 200, Authorization Bearer set and valid", func(t *testing.T) {
+		body, _ := json.Marshal(input{Password: adminPassword})
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodPost, Path, bytes.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
@@ -76,39 +68,23 @@ func TestIntegration_AuthenticateUser(t *testing.T) {
 			t.Fatalf("expected 200, got %d", rec.Code)
 		}
 
-		var cookie *http.Cookie
-		for _, c := range rec.Result().Cookies() {
-			if c.Name == jwt.CookieName() {
-				cookie = c
-				break
-			}
-		}
-		if cookie == nil {
-			t.Fatalf("expected jwt cookie to be set")
+		var got output
+		if err := json.NewDecoder(rec.Body).Decode(&got); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
 		}
 
-		if !cookie.HttpOnly {
-			t.Fatalf("expected HttpOnly cookie")
+		token := got.Token
+		if token == "" {
+			t.Fatalf("expected non-empty bearer token")
 		}
-		if !cookie.Secure {
-			t.Fatalf("expected Secure cookie")
-		}
-		if cookie.Path != "/" {
-			t.Fatalf("expected cookie Path=/, got %s", cookie.Path)
-		}
-		if cookie.SameSite != http.SameSiteStrictMode {
-			t.Fatalf("expected SameSite Strict mode, got %v", cookie.SameSite)
-		}
-		if cookie.MaxAge <= 0 {
-			t.Fatalf("expected positive MaxAge, got %d", cookie.MaxAge)
-		}
-		if time.Now().After(cookie.Expires) {
-			t.Fatalf("expected cookie to expire in the future")
-		}
-
 		// token should be parseable by the same jwt
-		if err := jwt.Parse(cookie.Value); err != nil {
-			t.Fatalf("expected valid jwt in cookie, got parse error: %v", err)
+		if err := jwt.Parse(token); err != nil {
+			t.Fatalf("expected valid jwt in Authorization header, got parse error: %v", err)
+		}
+
+		// Ensure no cookies set
+		if len(rec.Result().Cookies()) > 0 {
+			t.Fatalf("expected no cookies to be set")
 		}
 	})
 }

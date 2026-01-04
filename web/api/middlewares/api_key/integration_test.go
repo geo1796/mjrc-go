@@ -10,7 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func TestMiddleware_ApiKey(t *testing.T) {
+func TestIntegration_ApiKey(t *testing.T) {
 	const protectedPath = "/protected"
 	const key = "super-secret-key"
 
