@@ -1,0 +1,12 @@
+**/.DS_Store
+**/.idea
+**/coverage.**
+**/fcm-account-key.json
+**/aasa.json
+**/assetlinks.json
+.git
+.github
+.gitignore
+.junie
+Dockerfile
+*.log

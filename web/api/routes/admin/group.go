@@ -11,15 +11,11 @@ import (
 const Prefix = "/admin"
 
 func Group(deps runtime.Dependencies) *chix.Group {
-	g := chix.NewGroup(Prefix)
+	g := chix.NewGroup(Prefix, admin_login.Route(deps))
 
-	g.Add(
-		admin_login.Route(deps),
-
-		authenticate_admin.Middleware(deps),
-
+	g.Add(chix.NewGroup("/", authenticate_admin.Middleware(deps),
 		admin_skills.Group(deps),
-	)
+	))
 
 	return g
 }

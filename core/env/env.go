@@ -48,12 +48,12 @@ func Load() (Env, error) {
 
 	var err error
 
-	if e.postgresConfig, err = loadPostgresConfig(); err != nil {
-		return nil, fmt.Errorf("failed to load postgres config: %v", err)
+	if e.postgresConfig, err = loadPostgresConfig(e.IsProd()); err != nil {
+		return nil, fmt.Errorf("failed to load postgres config: %w", err)
 	}
 
 	if e.securityConfig, err = loadSecurityConfig(e.IsProd()); err != nil {
-		return nil, fmt.Errorf("failed to load security config: %v", err)
+		return nil, fmt.Errorf("failed to load security config: %w", err)
 	}
 
 	return e, nil

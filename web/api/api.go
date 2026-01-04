@@ -13,11 +13,9 @@ import (
 const Prefix = "/api"
 
 func group(deps runtime.Dependencies) *chix.Group {
-	group := chix.NewGroup(Prefix)
+	group := chix.NewGroup(Prefix, api_key.Middleware(deps))
 
 	group.Add(
-		api_key.Middleware(deps),
-
 		public.Group(deps),
 		admin.Group(deps),
 	)

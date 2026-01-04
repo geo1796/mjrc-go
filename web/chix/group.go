@@ -29,8 +29,8 @@ func (g *Group) Register(router chi.Router) {
 		logger.Any("components", len(g.components)))
 }
 
-func NewGroup(prefix string) *Group {
-	return &Group{prefix: prefix}
+func NewGroup(prefix string, components ...Component) *Group {
+	return &Group{prefix: prefix, components: components}
 }
 
 func (g *Group) Add(components ...Component) {
