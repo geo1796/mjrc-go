@@ -58,10 +58,12 @@ func TestIntegration_AuthenticateUser(t *testing.T) {
 
 	t.Run("correct password -> 200, Authorization Bearer set and valid", func(t *testing.T) {
 		body, _ := json.Marshal(input{Password: adminPassword})
+		before := time.Now().UTC()
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodPost, Path, bytes.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		r.ServeHTTP(rec, req)
+		after := time.Now().UTC()
 
 		if rec.Code != http.StatusOK {
 			t.Fatalf("expected 200, got %d", rec.Code)
@@ -79,6 +81,13 @@ func TestIntegration_AuthenticateUser(t *testing.T) {
 		// token should be parseable by the same jwt
 		if err := jwt.Parse(token); err != nil {
 			t.Fatalf("expected valid jwt in Authorization header, got parse error: %v", err)
+		}
+
+		// Assert expiry is set correctly based on the TTL (1 minute)
+		lower := before.Add(1 * time.Minute)
+		upper := after.Add(1 * time.Minute)
+		if got.Expiry.Before(lower) || got.Expiry.After(upper) {
+			t.Fatalf("expected expiry to be between %v and %v, got %v", lower, upper, got.Expiry)
 		}
 
 		// Ensure no cookies set
