@@ -30,14 +30,14 @@ func (h *handler) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, _, err := h.jwt.Generate()
+	token, expiry, err := h.jwt.Generate()
 	if err != nil {
 		logger.Error("failed to generate JWT", logger.Err(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	if err = json.NewEncoder(w).Encode(output{token}); err != nil {
+	if err = json.NewEncoder(w).Encode(output{Token: token, Expiry: expiry}); err != nil {
 		logger.Error("failed to encode JWT", logger.Err(err))
 	}
 }

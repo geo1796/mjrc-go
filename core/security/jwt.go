@@ -29,12 +29,12 @@ const issuer = "mjrc-api"
 const audience = "mjrc.auth"
 
 func (j *jwt) Generate() (string, time.Time, error) {
-	now := time.Now()
+	now := time.Now().UTC()
 	expiry := now.Add(j.ttl)
 
 	claims := gojwt.RegisteredClaims{
 		ExpiresAt: gojwt.NewNumericDate(expiry),
-		IssuedAt:  gojwt.NewNumericDate(time.Now()),
+		IssuedAt:  gojwt.NewNumericDate(now),
 		Issuer:    issuer,
 		Audience:  []string{audience},
 	}

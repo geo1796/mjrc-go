@@ -6,7 +6,7 @@ import (
 	"mjrc/web/chix"
 )
 
-const Prefix = "/public"
+const Prefix = "/"
 
 func Group(deps runtime.Dependencies) *chix.Group {
 	return chix.NewGroup(Prefix,

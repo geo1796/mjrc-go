@@ -63,10 +63,13 @@ func run() int {
 	router := chi.NewRouter()
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.RequestID)
+	router.Use(middleware.StripSlashes)
+	router.Use(middleware.SetHeader("Content-Type", "application/json; charset=utf-8"))
 
 	router.Get("/livez", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
 	})
 
 	router.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
@@ -78,10 +81,12 @@ func run() int {
 		if err := db.Pool().Ping(ctx); err != nil {
 			logger.Warn("healthz: db ping failed", logger.Err(err))
 			w.WriteHeader(http.StatusServiceUnavailable)
+			_, _ = w.Write([]byte("db ping failed"))
 			return
 		}
 
 		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("db ok"))
 	})
 
 	api.Register(router, deps)

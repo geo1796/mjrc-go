@@ -76,9 +76,6 @@ func (h *handler) getSkillsForUser(w http.ResponseWriter, r *http.Request) {
 		dto = append(dto, skill)
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-
 	if err = json.NewEncoder(w).Encode(dto); err != nil {
 		logger.Error("failed to encode skills", logger.Err(err))
 	}
