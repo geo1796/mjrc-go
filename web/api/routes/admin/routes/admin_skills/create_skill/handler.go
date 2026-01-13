@@ -29,18 +29,38 @@ func (h *handler) createSkillForAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Normalize slices (NOT NULL array columns should not receive NULL)
-	categories := make([]string, 0, len(in.Categories))
-	for _, c := range in.Categories {
+	if len(in.Categories) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// Validate and normalize categories (reject duplicates)
+	seenCats := make(map[string]struct{}, len(in.Categories))
+	categories := make([]string, len(in.Categories))
+	for i, c := range in.Categories {
 		if !c.IsValid() {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		categories = append(categories, string(c))
+		cat := string(c)
+		if _, seen := seenCats[cat]; seen {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		seenCats[cat] = struct{}{}
+		categories[i] = cat
 	}
-	prereqs := make([]pgtype.UUID, 0, len(in.Prerequisites))
-	for _, p := range in.Prerequisites {
-		prereqs = append(prereqs, pgtype.UUID{Bytes: p, Valid: true})
+
+	// Normalize prerequisites (reject duplicates)
+	seenPrereqs := make(map[[16]byte]struct{}, len(in.Prerequisites))
+	prereqs := make([]pgtype.UUID, len(in.Prerequisites))
+	for i, p := range in.Prerequisites {
+		if _, seen := seenPrereqs[p]; seen {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		seenPrereqs[p] = struct{}{}
+		prereqs[i] = pgtype.UUID{Bytes: p, Valid: true}
 	}
 
 	params := dao.CreateSkillParams{

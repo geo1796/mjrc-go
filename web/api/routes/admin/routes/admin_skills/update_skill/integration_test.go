@@ -168,3 +168,206 @@ func TestIntegration_UpdateSkill_BadCategory(t *testing.T) {
 		t.Fatalf("expected name unchanged %s, got %s", seed.Name, rows[0].Name)
 	}
 }
+
+func TestIntegration_UpdateSkill_DuplicateCategories(t *testing.T) {
+	ctx := context.Background()
+	container, db := postgres.NewTestContainer(ctx, t)
+	defer postgres.CleanUpTestContainer(ctx, t, container, db)
+
+	r := chi.NewRouter()
+	Route(runtime.NewBuilder().WithDB(db).Build()).Register(r)
+
+	// Seed initial skill
+	seed := dao.CreateSkillParams{
+		Name:             "speed step",
+		YoutubeVideoID:   "yt_speed_step",
+		IsVideoLandscape: true,
+		Level:            3,
+		Categories:       []string{string(models.SkillCategoryBasics)},
+		Prerequisites:    []pgtype.UUID{},
+	}
+	if err := db.Queries().CreateSkill(ctx, seed); err != nil {
+		t.Fatalf("failed to seed skill: %v", err)
+	}
+	rows, err := db.Queries().GetSkills(ctx)
+	if err != nil {
+		t.Fatalf("GetSkills failed: %v", err)
+	}
+	if len(rows) != 1 {
+		t.Fatalf("expected 1 skill in db, got %d", len(rows))
+	}
+	id := uuid.UUID(rows[0].ID.Bytes)
+
+	// Attempt update with duplicate categories
+	in := models.Skill{
+		Name:             "speed step updated",
+		Level:            4,
+		YoutubeVideoID:   "yt_speed_step_upd",
+		IsVideoLandscape: false,
+		Categories:       []models.SkillCategory{models.SkillCategoryBasics, models.SkillCategoryBasics},
+	}
+	b, _ := json.Marshal(in)
+	req := httptest.NewRequest(http.MethodPut, "/"+id.String(), bytes.NewReader(b))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400, got %d", rec.Code)
+	}
+
+	// Ensure row not updated
+	rows, err = db.Queries().GetSkills(ctx)
+	if err != nil {
+		t.Fatalf("GetSkills failed: %v", err)
+	}
+	if rows[0].Name != seed.Name {
+		t.Fatalf("expected name unchanged %s, got %s", seed.Name, rows[0].Name)
+	}
+}
+
+func TestIntegration_UpdateSkill_DuplicatePrerequisites(t *testing.T) {
+	ctx := context.Background()
+	container, db := postgres.NewTestContainer(ctx, t)
+	defer postgres.CleanUpTestContainer(ctx, t, container, db)
+
+	r := chi.NewRouter()
+	Route(runtime.NewBuilder().WithDB(db).Build()).Register(r)
+
+	// Seed initial skill
+	seed := dao.CreateSkillParams{
+		Name:             "side swing",
+		YoutubeVideoID:   "yt_side_swing",
+		IsVideoLandscape: false,
+		Level:            2,
+		Categories:       []string{string(models.SkillCategoryBasics)},
+		Prerequisites:    []pgtype.UUID{},
+	}
+	if err := db.Queries().CreateSkill(ctx, seed); err != nil {
+		t.Fatalf("failed to seed skill: %v", err)
+	}
+	rows, err := db.Queries().GetSkills(ctx)
+	if err != nil {
+		t.Fatalf("GetSkills failed: %v", err)
+	}
+	if len(rows) != 1 {
+		t.Fatalf("expected 1 skill in db, got %d", len(rows))
+	}
+	id := uuid.UUID(rows[0].ID.Bytes)
+
+	dup := uuid.New()
+	in := models.Skill{
+		Name:             "side swing updated",
+		Level:            3,
+		YoutubeVideoID:   "yt_side_swing_upd",
+		IsVideoLandscape: true,
+		Categories:       []models.SkillCategory{models.SkillCategoryBasics},
+		Prerequisites:    []uuid.UUID{dup, dup},
+	}
+	b, _ := json.Marshal(in)
+	req := httptest.NewRequest(http.MethodPut, "/"+id.String(), bytes.NewReader(b))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400, got %d", rec.Code)
+	}
+
+	rows, err = db.Queries().GetSkills(ctx)
+	if err != nil {
+		t.Fatalf("GetSkills failed: %v", err)
+	}
+	if rows[0].Name != seed.Name {
+		t.Fatalf("expected name unchanged %s, got %s", seed.Name, rows[0].Name)
+	}
+}
+
+func TestIntegration_UpdateSkill_NotFound(t *testing.T) {
+	ctx := context.Background()
+	container, db := postgres.NewTestContainer(ctx, t)
+	defer postgres.CleanUpTestContainer(ctx, t, container, db)
+
+	r := chi.NewRouter()
+	Route(runtime.NewBuilder().WithDB(db).Build()).Register(r)
+
+	in := models.Skill{
+		Name:             "nonexistent",
+		Level:            1,
+		YoutubeVideoID:   "yt_nonexistent",
+		IsVideoLandscape: true,
+		Categories:       []models.SkillCategory{models.SkillCategoryBasics},
+		Prerequisites:    []uuid.UUID{},
+	}
+	b, _ := json.Marshal(in)
+
+	id := uuid.New()
+	req := httptest.NewRequest(http.MethodPut, "/"+id.String(), bytes.NewReader(b))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected status 404, got %d", rec.Code)
+	}
+}
+
+func TestIntegration_UpdateSkill_EmptyCategories(t *testing.T) {
+	ctx := context.Background()
+	container, db := postgres.NewTestContainer(ctx, t)
+	defer postgres.CleanUpTestContainer(ctx, t, container, db)
+
+	r := chi.NewRouter()
+	Route(runtime.NewBuilder().WithDB(db).Build()).Register(r)
+
+	// Seed initial skill
+	seed := dao.CreateSkillParams{
+		Name:             "basic jump",
+		YoutubeVideoID:   "yt_basic_jump",
+		IsVideoLandscape: true,
+		Level:            1,
+		Categories:       []string{string(models.SkillCategoryBasics)},
+		Prerequisites:    []pgtype.UUID{},
+	}
+	if err := db.Queries().CreateSkill(ctx, seed); err != nil {
+		t.Fatalf("failed to seed skill: %v", err)
+	}
+	rows, err := db.Queries().GetSkills(ctx)
+	if err != nil {
+		t.Fatalf("GetSkills failed: %v", err)
+	}
+	if len(rows) != 1 {
+		t.Fatalf("expected 1 skill in db, got %d", len(rows))
+	}
+	id := uuid.UUID(rows[0].ID.Bytes)
+
+	// Attempt update with empty categories
+	in := models.Skill{
+		Name:             "basic jump updated",
+		Level:            2,
+		YoutubeVideoID:   "yt_basic_jump_upd",
+		IsVideoLandscape: false,
+		Categories:       []models.SkillCategory{},
+	}
+	b, _ := json.Marshal(in)
+	req := httptest.NewRequest(http.MethodPut, "/"+id.String(), bytes.NewReader(b))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400, got %d", rec.Code)
+	}
+
+	// Ensure row not updated (name unchanged and categories still present)
+	rows, err = db.Queries().GetSkills(ctx)
+	if err != nil {
+		t.Fatalf("GetSkills failed: %v", err)
+	}
+	if rows[0].Name != seed.Name {
+		t.Fatalf("expected name unchanged %s, got %s", seed.Name, rows[0].Name)
+	}
+	if len(rows[0].Categories) == 0 {
+		t.Fatalf("expected categories to remain non-empty")
+	}
+}

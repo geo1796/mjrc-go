@@ -2,6 +2,7 @@ package update_skill
 
 import (
 	"encoding/json"
+	"errors"
 	"mjrc/core/logger"
 	"mjrc/core/models"
 	"mjrc/core/postgres"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -38,20 +40,38 @@ func (h *handler) updateSkillForAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate and normalize categories
-	categories := make([]string, 0, len(in.Categories))
-	for _, c := range in.Categories {
+	if len(in.Categories) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// Validate and normalize categories (reject duplicates)
+	seenCats := make(map[string]struct{}, len(in.Categories))
+	categories := make([]string, len(in.Categories))
+	for i, c := range in.Categories {
 		if !c.IsValid() {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		categories = append(categories, string(c))
+		cat := string(c)
+		if _, seen := seenCats[cat]; seen {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		seenCats[cat] = struct{}{}
+		categories[i] = cat
 	}
 
-	// Normalize prerequisites
-	prereqs := make([]pgtype.UUID, 0, len(in.Prerequisites))
-	for _, p := range in.Prerequisites {
-		prereqs = append(prereqs, pgtype.UUID{Bytes: p, Valid: true})
+	// Normalize prerequisites (reject duplicates)
+	seenPrereqs := make(map[[16]byte]struct{}, len(in.Prerequisites))
+	prereqs := make([]pgtype.UUID, len(in.Prerequisites))
+	for i, p := range in.Prerequisites {
+		if _, seen := seenPrereqs[p]; seen {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		seenPrereqs[p] = struct{}{}
+		prereqs[i] = pgtype.UUID{Bytes: p, Valid: true}
 	}
 
 	params := dao.UpdateSkillParams{
@@ -64,8 +84,14 @@ func (h *handler) updateSkillForAdmin(w http.ResponseWriter, r *http.Request) {
 		Prerequisites:    prereqs,
 	}
 
-	if err = h.db.Queries().UpdateSkill(r.Context(), params); err != nil {
+	if _, err = h.db.Queries().UpdateSkill(r.Context(), params); err != nil {
 		logger.Error("failed to update skill", logger.Err(err))
+
+		if errors.Is(err, pgx.ErrNoRows) {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

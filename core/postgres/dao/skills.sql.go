@@ -42,15 +42,16 @@ func (q *Queries) CreateSkill(ctx context.Context, arg CreateSkillParams) error 
 	return err
 }
 
-const deleteSkill = `-- name: DeleteSkill :exec
+const deleteSkill = `-- name: DeleteSkill :one
 DELETE
 FROM app.skills
-WHERE id = $1
+WHERE id = $1 RETURNING id
 `
 
-func (q *Queries) DeleteSkill(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteSkill, id)
-	return err
+func (q *Queries) DeleteSkill(ctx context.Context, id pgtype.UUID) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, deleteSkill, id)
+	err := row.Scan(&id)
+	return id, err
 }
 
 const getSkills = `-- name: GetSkills :many
@@ -105,7 +106,7 @@ func (q *Queries) SkillsFingerprint(ctx context.Context) (SkillsFingerprintRow, 
 	return i, err
 }
 
-const updateSkill = `-- name: UpdateSkill :exec
+const updateSkill = `-- name: UpdateSkill :one
 UPDATE app.skills
 SET name               = $2,
     youtube_video_id   = $3,
@@ -113,7 +114,7 @@ SET name               = $2,
     level              = $5,
     categories         = $6,
     prerequisites      = $7
-WHERE id = $1
+WHERE id = $1 RETURNING id
 `
 
 type UpdateSkillParams struct {
@@ -126,8 +127,8 @@ type UpdateSkillParams struct {
 	Prerequisites    []pgtype.UUID
 }
 
-func (q *Queries) UpdateSkill(ctx context.Context, arg UpdateSkillParams) error {
-	_, err := q.db.Exec(ctx, updateSkill,
+func (q *Queries) UpdateSkill(ctx context.Context, arg UpdateSkillParams) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, updateSkill,
 		arg.ID,
 		arg.Name,
 		arg.YoutubeVideoID,
@@ -136,5 +137,7 @@ func (q *Queries) UpdateSkill(ctx context.Context, arg UpdateSkillParams) error 
 		arg.Categories,
 		arg.Prerequisites,
 	)
-	return err
+	var id pgtype.UUID
+	err := row.Scan(&id)
+	return id, err
 }

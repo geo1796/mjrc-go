@@ -85,3 +85,21 @@ func seedOneSkill(ctx context.Context, db postgres.DB) error {
 	}
 	return db.Queries().CreateSkill(ctx, params)
 }
+
+func TestIntegration_DeleteSkill_NotFound(t *testing.T) {
+	ctx := context.Background()
+	container, db := postgres.NewTestContainer(ctx, t)
+	defer postgres.CleanUpTestContainer(ctx, t, container, db)
+
+	r := chi.NewRouter()
+	Route(runtime.NewBuilder().WithDB(db).Build()).Register(r)
+
+	id := uuid.New()
+	req := httptest.NewRequest(http.MethodDelete, "/"+id.String(), nil)
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected status 404, got %d", rec.Code)
+	}
+}

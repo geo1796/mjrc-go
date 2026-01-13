@@ -1,12 +1,14 @@
 package delete_skill
 
 import (
+	"errors"
 	"mjrc/core/logger"
 	"mjrc/core/postgres"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -28,8 +30,14 @@ func (h *handler) deleteSkillForAdmin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Perform deletion
-	if err = h.db.Queries().DeleteSkill(r.Context(), pgtype.UUID{Bytes: uid, Valid: true}); err != nil {
+	if _, err = h.db.Queries().DeleteSkill(r.Context(), pgtype.UUID{Bytes: uid, Valid: true}); err != nil {
 		logger.Error("failed to delete skill", logger.Err(err))
+
+		if errors.Is(err, pgx.ErrNoRows) {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

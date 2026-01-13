@@ -36,7 +36,7 @@ CREATE TABLE app.skills
     is_video_landscape BOOLEAN     NOT NULL DEFAULT FALSE,
 
     level              SMALLINT    NOT NULL,
-    CONSTRAINT ck_skills_level CHECK (level >= 1 AND level <= 10),
+    CONSTRAINT ck_skills_level CHECK (level >= 1 AND level <= 8),
 
     categories         TEXT[]      NOT NULL DEFAULT '{}',
     CONSTRAINT ck_skills_categories CHECK

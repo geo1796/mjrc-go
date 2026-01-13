@@ -14,6 +14,7 @@ import (
 	"sort"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 )
 
 func TestIntegration_CreateSkill(t *testing.T) {
@@ -106,6 +107,113 @@ func TestIntegration_CreateSkill_BadCategory(t *testing.T) {
 	}
 
 	// ensure nothing was inserted
+	rows, err := db.Queries().GetSkills(ctx)
+	if err != nil {
+		t.Fatalf("GetSkills failed: %v", err)
+	}
+	if len(rows) != 0 {
+		t.Fatalf("expected 0 skills in db, got %d", len(rows))
+	}
+}
+
+func TestIntegration_CreateSkill_DuplicateCategories(t *testing.T) {
+	ctx := context.Background()
+	container, db := postgres.NewTestContainer(ctx, t)
+	defer postgres.CleanUpTestContainer(ctx, t, container, db)
+
+	r := chi.NewRouter()
+	Route(runtime.NewBuilder().WithDB(db).Build()).Register(r)
+
+	in := models.Skill{
+		Name:             "dup cats",
+		Level:            2,
+		YoutubeVideoID:   "yt_dup_cats",
+		IsVideoLandscape: false,
+		Categories:       []models.SkillCategory{models.SkillCategoryBasics, models.SkillCategoryBasics},
+	}
+
+	body, _ := json.Marshal(in)
+	req := httptest.NewRequest(http.MethodPost, Path, bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400, got %d", rec.Code)
+	}
+
+	rows, err := db.Queries().GetSkills(ctx)
+	if err != nil {
+		t.Fatalf("GetSkills failed: %v", err)
+	}
+	if len(rows) != 0 {
+		t.Fatalf("expected 0 skills in db, got %d", len(rows))
+	}
+}
+
+func TestIntegration_CreateSkill_DuplicatePrerequisites(t *testing.T) {
+	ctx := context.Background()
+	container, db := postgres.NewTestContainer(ctx, t)
+	defer postgres.CleanUpTestContainer(ctx, t, container, db)
+
+	r := chi.NewRouter()
+	Route(runtime.NewBuilder().WithDB(db).Build()).Register(r)
+
+	id := uuid.New()
+	in := models.Skill{
+		Name:             "dup prereqs",
+		Level:            4,
+		YoutubeVideoID:   "yt_dup_prereqs",
+		IsVideoLandscape: true,
+		Categories:       []models.SkillCategory{models.SkillCategoryBasics},
+		Prerequisites:    []uuid.UUID{id, id},
+	}
+
+	body, _ := json.Marshal(in)
+	req := httptest.NewRequest(http.MethodPost, Path, bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400, got %d", rec.Code)
+	}
+
+	rows, err := db.Queries().GetSkills(ctx)
+	if err != nil {
+		t.Fatalf("GetSkills failed: %v", err)
+	}
+	if len(rows) != 0 {
+		t.Fatalf("expected 0 skills in db, got %d", len(rows))
+	}
+}
+
+func TestIntegration_CreateSkill_EmptyCategories(t *testing.T) {
+	ctx := context.Background()
+	container, db := postgres.NewTestContainer(ctx, t)
+	defer postgres.CleanUpTestContainer(ctx, t, container, db)
+
+	r := chi.NewRouter()
+	Route(runtime.NewBuilder().WithDB(db).Build()).Register(r)
+
+	in := models.Skill{
+		Name:             "no categories",
+		Level:            1,
+		YoutubeVideoID:   "yt_no_cats",
+		IsVideoLandscape: false,
+		Categories:       []models.SkillCategory{},
+	}
+
+	body, _ := json.Marshal(in)
+	req := httptest.NewRequest(http.MethodPost, Path, bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400, got %d", rec.Code)
+	}
+
 	rows, err := db.Queries().GetSkills(ctx)
 	if err != nil {
 		t.Fatalf("GetSkills failed: %v", err)
