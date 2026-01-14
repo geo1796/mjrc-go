@@ -24,9 +24,9 @@ type testData struct {
 
 func buildTestData() (data testData) {
 	data.skills = []models.Skill{
-		{Name: "skill1", Level: 10, Categories: []models.SkillCategory{"floaters", "multiples"}},
+		{Name: "skill1", Level: 8, Categories: []models.SkillCategory{"floaters", "multiples"}},
 		{Name: "skill2", Level: 5, Categories: []models.SkillCategory{"multiples"}},
-		{Name: "skill3", Level: 9, Categories: []models.SkillCategory{"floaters"}},
+		{Name: "skill3", Level: 7, Categories: []models.SkillCategory{"floaters"}},
 		{Name: "skill4", Level: 1, Categories: []models.SkillCategory{"floaters"}},
 	}
 	return

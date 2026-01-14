@@ -40,7 +40,7 @@ CREATE TABLE app.skills
 
     categories         TEXT[]      NOT NULL DEFAULT '{}',
     CONSTRAINT ck_skills_categories CHECK
-        (categories <@ ARRAY ['basics', 'footwork', 'backward', 'wraps', 'releases', 'floaters', 'multiples']::TEXT[]),
+        (categories <@ ARRAY ['basics', 'manipulation', 'footwork', 'backward', 'wraps', 'releases', 'floaters', 'multiples']::TEXT[]),
 
     prerequisites      UUID[]      NOT NULL DEFAULT '{}',
     CONSTRAINT ck_skills_prerequisites CHECK (NOT (id = ANY (prerequisites))),
