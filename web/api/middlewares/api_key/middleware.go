@@ -1,6 +1,7 @@
 package api_key
 
 import (
+	"mjrc/core/logger"
 	"mjrc/core/runtime"
 	"mjrc/core/security"
 	"mjrc/web/chix"
@@ -25,7 +26,8 @@ type handler struct {
 func (h *handler) validateApiKey(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		input := r.Header.Get("X-API-KEY")
-		if !h.authenticator.Authenticate(input) {
+		if err := h.authenticator.Authenticate(input); err != nil {
+			logger.Warn("invalid API key", logger.Err(err))
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}

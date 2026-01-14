@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func TestIntegration_AuthenticateUser(t *testing.T) {
@@ -21,9 +22,11 @@ func TestIntegration_AuthenticateUser(t *testing.T) {
 		1*time.Minute,
 	)
 
+	pwdHash, _ := bcrypt.GenerateFromPassword([]byte(adminPassword), bcrypt.DefaultCost)
+
 	r := chi.NewRouter()
 	Route(runtime.NewBuilder().
-		WithAdminAuthenticator(security.NewAuthenticator("Test123!")).
+		WithAdminAuthenticator(security.NewAdminAuthenticator(string(pwdHash))).
 		WithJWT(jwt).Build()).
 		Register(r)
 

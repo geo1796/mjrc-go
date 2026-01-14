@@ -24,8 +24,8 @@ func (h *handler) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !h.adminAuthenticator.Authenticate(i.Password) {
-		logger.Warn("invalid password", logger.Any("password", i.Password))
+	if err := h.adminAuthenticator.Authenticate(i.Password); err != nil {
+		logger.Warn("invalid credentials", logger.Err(err))
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}

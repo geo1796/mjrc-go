@@ -16,7 +16,7 @@ func TestIntegration_ApiKey(t *testing.T) {
 
 	r := chi.NewRouter()
 	deps := runtime.NewBuilder().
-		WithAPIKeyAuthenticator(security.NewAuthenticator(key)).
+		WithAPIKeyAuthenticator(security.NewAPIKeyAuthenticator(key)).
 		Build()
 	Middleware(deps).Register(r)
 

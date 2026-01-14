@@ -52,10 +52,10 @@ func run() int {
 			environ.SecurityConfig().AccessTokenSecret,
 			environ.SecurityConfig().AccessTokenTTL),
 		).
-		WithAdminAuthenticator(security.NewAuthenticator(
+		WithAdminAuthenticator(security.NewAdminAuthenticator(
 			environ.SecurityConfig().AdminPassword),
 		).
-		WithAPIKeyAuthenticator(security.NewAuthenticator(
+		WithAPIKeyAuthenticator(security.NewAPIKeyAuthenticator(
 			environ.SecurityConfig().APIKey),
 		).
 		Build()
