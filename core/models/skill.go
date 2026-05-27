@@ -9,19 +9,21 @@ import (
 type SkillCategory string
 
 const (
-	SkillCategoryBasics    SkillCategory = "basics"
-	SkillCategoryFootwork  SkillCategory = "footwork"
-	SkillCategoryBackward  SkillCategory = "backward"
-	SkillCategoryWraps     SkillCategory = "wraps"
-	SkillCategoryReleases  SkillCategory = "releases"
-	SkillCategoryFloaters  SkillCategory = "floaters"
-	SkillCategoryMultiples SkillCategory = "multiples"
+	SkillCategoryBasics       SkillCategory = "basics"
+	SkillCategoryManipulation SkillCategory = "manipulation"
+	SkillCategoryFootwork     SkillCategory = "footwork"
+	SkillCategoryBackward     SkillCategory = "backward"
+	SkillCategoryWraps        SkillCategory = "wraps"
+	SkillCategoryReleases     SkillCategory = "releases"
+	SkillCategoryFloaters     SkillCategory = "floaters"
+	SkillCategoryMultiples    SkillCategory = "multiples"
 )
 
 func (sc SkillCategory) IsValid() bool {
 	switch sc {
 	case
 		SkillCategoryBasics,
+		SkillCategoryManipulation,
 		SkillCategoryFootwork,
 		SkillCategoryBackward,
 		SkillCategoryWraps,

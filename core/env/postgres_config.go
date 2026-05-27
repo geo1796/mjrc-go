@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -16,7 +17,14 @@ type PostgresConfig struct {
 }
 
 func loadPostgresConfig(isProd bool) (PostgresConfig, error) {
-	cfg := PostgresConfig{DSN: getEnv("PG_DSN", "")}
+	cfg := PostgresConfig{DSN: strings.Join([]string{
+		"host=" + getEnv("PG_HOST", ""),
+		"port=" + getEnv("PG_PORT", ""),
+		"user=" + getEnv("PG_USER", ""),
+		"password=" + getEnv("PG_PASSWORD", ""),
+		"dbname=" + getEnv("PG_DBNAME", ""),
+		"sslmode=" + getEnv("PG_SSLMODE", "require"),
+	}, " ")}
 
 	if isProd && cfg.DSN == "" {
 		return PostgresConfig{}, errors.New("PG_DSN is not set")

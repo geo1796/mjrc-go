@@ -6,34 +6,35 @@ import (
 	"time"
 )
 
-type SecurityConfig struct {
+type ServerConfig struct {
+	Addr              string
 	AccessTokenSecret []byte
 	AccessTokenTTL    time.Duration
 	AdminPassword     string
 	APIKey            string
 }
 
-func loadSecurityConfig(isProd bool) (SecurityConfig, error) {
-	var cfg SecurityConfig
+func loadServerConfig(isProd bool) (ServerConfig, error) {
+	cfg := ServerConfig{Addr: "0.0.0.0:" + getEnv("PORT", "8080")}
 
 	if accessTokenTTL, err := time.ParseDuration(getEnv("ACCESS_TOKEN_TTL", "1h")); err != nil {
-		return SecurityConfig{}, fmt.Errorf("failed to parse ACCESS_TOKEN_TTL: %w", err)
+		return ServerConfig{}, fmt.Errorf("failed to parse ACCESS_TOKEN_TTL: %w", err)
 	} else {
 		cfg.AccessTokenTTL = accessTokenTTL
 	}
 
 	if accessTokenSecret := getEnv("ACCESS_TOKEN_SECRET", ""); isProd && accessTokenSecret == "" {
-		return SecurityConfig{}, errors.New("ACCESS_TOKEN_SECRET is not set")
+		return ServerConfig{}, errors.New("ACCESS_TOKEN_SECRET is not set")
 	} else {
 		cfg.AccessTokenSecret = []byte(accessTokenSecret)
 	}
 
 	if cfg.AdminPassword = getEnv("ADMIN_PASSWORD", ""); isProd && cfg.AdminPassword == "" {
-		return SecurityConfig{}, errors.New("ADMIN_PASSWORD is not set")
+		return ServerConfig{}, errors.New("ADMIN_PASSWORD is not set")
 	}
 
 	if cfg.APIKey = getEnv("API_KEY", ""); isProd && cfg.APIKey == "" {
-		return SecurityConfig{}, errors.New("API_KEY is not set")
+		return ServerConfig{}, errors.New("API_KEY is not set")
 	}
 
 	return cfg, nil

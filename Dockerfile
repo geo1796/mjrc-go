@@ -1,4 +1,4 @@
-FROM golang:1.25.0-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
 WORKDIR /app
 ENV CGO_ENABLED=0 GOOS=linux

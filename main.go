@@ -49,14 +49,14 @@ func run() int {
 	deps := runtime.NewBuilder().
 		WithDB(db).
 		WithJWT(security.NewJWT(
-			environ.SecurityConfig().AccessTokenSecret,
-			environ.SecurityConfig().AccessTokenTTL),
+			environ.ServerConfig().AccessTokenSecret,
+			environ.ServerConfig().AccessTokenTTL),
 		).
 		WithAdminAuthenticator(security.NewAdminAuthenticator(
-			environ.SecurityConfig().AdminPassword),
+			environ.ServerConfig().AdminPassword),
 		).
 		WithAPIKeyAuthenticator(security.NewAPIKeyAuthenticator(
-			environ.SecurityConfig().APIKey),
+			environ.ServerConfig().APIKey),
 		).
 		Build()
 
@@ -94,7 +94,7 @@ func run() int {
 	api.Register(router, deps)
 
 	srv := &http.Server{
-		Addr:    "0.0.0.0:8080",
+		Addr:    environ.ServerConfig().Addr,
 		Handler: router,
 	}
 
