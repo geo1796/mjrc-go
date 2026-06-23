@@ -46,6 +46,11 @@ func run() int {
 	}
 	defer db.Close()
 
+	if err = db.PingWithRetry(rootCtx, 8, 100*time.Millisecond); err != nil {
+		logger.Error("failed to connect to database", logger.Err(err))
+		return 1
+	}
+
 	deps := runtime.NewBuilder().
 		WithDB(db).
 		WithJWT(security.NewJWT(
@@ -94,8 +99,9 @@ func run() int {
 	api.Register(router, deps)
 
 	srv := &http.Server{
-		Addr:    environ.ServerConfig().Addr,
-		Handler: router,
+		Addr:              environ.ServerConfig().Addr,
+		Handler:           router,
+		ReadHeaderTimeout: 5 * time.Second,
 	}
 
 	go func() {

@@ -32,7 +32,7 @@ func NewTestContainer(ctx context.Context, t *testing.T) (testcontainers.Contain
 	}
 
 	// Ensure DB is ready
-	if err = pingWithRetry(ctx, db, 8, 750*time.Millisecond); err != nil {
+	if err = db.PingWithRetry(ctx, 8, 100*time.Millisecond); err != nil {
 		CleanUpTestContainer(ctx, t, container, db)
 		t.Fatal(err)
 	}
@@ -43,21 +43,6 @@ func NewTestContainer(ctx context.Context, t *testing.T) (testcontainers.Contain
 	}
 
 	return container, db
-}
-
-func pingWithRetry(ctx context.Context, db DB, retries int, delay time.Duration) error {
-	pool := db.Pool()
-	var err error
-	for i := 0; i < retries; i++ {
-		pingCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
-		err = pool.Ping(pingCtx)
-		cancel()
-		if err == nil {
-			return nil
-		}
-		time.Sleep(delay)
-	}
-	return err
 }
 
 func startPostgresContainer(ctx context.Context, t *testing.T) (testcontainers.Container, string, nat.Port) {

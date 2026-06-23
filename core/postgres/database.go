@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"embed"
+	"errors"
 	"fmt"
 	"mjrc/core/postgres/dao"
 	"time"
@@ -17,6 +18,7 @@ import (
 var migrationsFS embed.FS
 
 type DB interface {
+	PingWithRetry(ctx context.Context, retries int, delay time.Duration) error
 	Pool() *pgxpool.Pool
 	Queries() *dao.Queries
 	Begin(ctx context.Context) (pgx.Tx, error)
@@ -77,4 +79,32 @@ func New(ctx context.Context, dsn string,
 		pool:    pool,
 		queries: dao.New(pool),
 	}, nil
+}
+
+func (db *db) PingWithRetry(ctx context.Context, retries int, delay time.Duration) error {
+	if retries < 1 {
+		return errors.New("pingWithRetry: retries must be >= 1")
+	}
+	pool := db.Pool()
+	var err error
+	for i := range retries {
+		pingCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+		err = pool.Ping(pingCtx)
+		cancel()
+		if err == nil {
+			return nil
+		}
+		if i == retries-1 {
+			break
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(delay):
+		}
+		if delay < time.Second {
+			delay *= 2 // backoff plafonné implicitement
+		}
+	}
+	return err
 }
