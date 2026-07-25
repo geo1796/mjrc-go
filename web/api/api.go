@@ -14,10 +14,8 @@ import (
 	"github.com/go-chi/httprate"
 )
 
-const Prefix = "/api"
-
 func group(deps runtime.Dependencies) *chix.Group {
-	api := chix.NewGroup(Prefix,
+	api := chix.NewGroup("/",
 		chix.NewMiddleware("content_type", middleware.SetHeader("Content-Type", "application/json; charset=utf-8")),
 		chix.NewMiddleware("rate_limit", httprate.LimitByIP(100, time.Minute)))
 
